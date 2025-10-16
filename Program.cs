@@ -18,7 +18,9 @@ public static class Program
             Console.WriteLine("\n--- Main Menu ---");
             Console.WriteLine("1. Add new DJ set");
             Console.WriteLine("2. Query database");
-            Console.WriteLine("3. Exit");
+            Console.WriteLine("3. Update DJ set");
+            Console.WriteLine("4. Delete DJ set");
+            Console.WriteLine("5. Exit");
             Console.Write("\nSelect an option: ");
             
             string? choice = Console.ReadLine();
@@ -33,6 +35,12 @@ public static class Program
                     QueryDatabase(context);
                     break;
                 case "3":
+                    UpdateDjSet(context);
+                    break;
+                case "4":
+                    DeleteDjSet(context);
+                    break;
+                case "5":
                     Console.WriteLine("\nGoodbye!");
                     return;
                 default:
@@ -782,5 +790,99 @@ public static class Program
         
         Console.WriteLine("Analytics added successfully!");
     }
+    static void UpdateDjSet(AppDbContext context)
+    {
+        Console.Write("\nEnter DJ set ID to update: ");
+        if (!int.TryParse(Console.ReadLine(), out int setId))
+        {
+            Console.WriteLine("Invalid ID.");
+            return;
+        }
+
+        var djSet = context.DjSets
+            .Include(ds => ds.Artist)
+            .Include(ds => ds.Venue)
+            .FirstOrDefault(ds => ds.DjSetId == setId);
+
+        if (djSet == null)
+        {
+            Console.WriteLine($"No DJ set found with ID {setId}.");
+            return;
+        }
+
+        Console.WriteLine($"\nEditing DJ Set: {djSet.Title ?? "Untitled"} by {djSet.Artist.DisplayName}");
+
+        Console.Write($"Enter new title (or press Enter to keep '{djSet.Title}'): ");
+        string? newTitle = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(newTitle))
+            djSet.Title = newTitle;
+
+        Console.Write($"Enter new date/time (yyyy-MM-dd HH:mm) or press Enter to keep current: ");
+        string? dateInput = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(dateInput) && DateTime.TryParse(dateInput, out var parsedDate))
+            djSet.SetDatetime = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
+
+        Console.Write($"Enter new duration (minutes) or press Enter to keep {djSet.DurationMinutes}: ");
+        string? durationInput = Console.ReadLine();
+        if (int.TryParse(durationInput, out int newDuration))
+            djSet.DurationMinutes = newDuration;
+
+        Console.Write("Change venue? (y/n): ");
+        if (Console.ReadLine()?.ToLower() == "y")
+            djSet.Venue = GetOrCreateVenue(context);
+
+        Console.Write("Change source URL? (y/n): ");
+        if (Console.ReadLine()?.ToLower() == "y")
+        {
+            Console.Write("Enter new source URL: ");
+            djSet.SourceUrl = Console.ReadLine();
+        }
+
+        context.SaveChanges();
+        Console.WriteLine("\nDJ Set updated successfully!");
+    }
+    static void DeleteDjSet(AppDbContext context)
+    {
+        Console.Write("\nEnter DJ set ID to delete: ");
+        if (!int.TryParse(Console.ReadLine(), out int setId))
+        {
+            Console.WriteLine("Invalid ID.");
+            return;
+        }
+
+        var djSet = context.DjSets
+            .Include(ds => ds.SetSongs)
+            .Include(ds => ds.SetAnalytics)
+            .FirstOrDefault(ds => ds.DjSetId == setId);
+
+        if (djSet == null)
+        {
+            Console.WriteLine($"No DJ set found with ID {setId}.");
+            return;
+        }
+
+        Console.WriteLine($"\nAre you sure you want to delete '{djSet.Title ?? "Untitled"}'? (y/n): ");
+        string? confirm = Console.ReadLine();
+        if (confirm?.ToLower() != "y")
+        {
+            Console.WriteLine("Deletion canceled.");
+            return;
+        }
+
+        // Remove related data first
+        if (djSet.SetSongs != null)
+            context.SetSongs.RemoveRange(djSet.SetSongs);
+
+        if (djSet.SetAnalytics != null)
+            context.SetAnalytics.Remove(djSet.SetAnalytics);
+
+        // Then remove the DJ set
+        context.DjSets.Remove(djSet);
+        context.SaveChanges();
+
+        Console.WriteLine("\nDJ Set deleted successfully!");
+    }
+
+
 }
 
