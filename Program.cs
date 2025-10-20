@@ -2,6 +2,18 @@ using _1001;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
 
+/*
+Really like the code flow, and how logic is seperated within fucntions. However this .cs file is 
+a little long and could probably be broken up to house different pieces of correlated logic
+
+Ansi.cs
+Queries
+    -Add.cs
+    -Delete.cs
+    -etc.
+
+but this is nitpicky
+*/
 
 public static class Program
 {
@@ -251,7 +263,7 @@ public static class Program
             {
                 ctx.Spinner(Spinner.Known.Dots);
                 ctx.SpinnerStyle(Style.Parse("yellow"));
-            
+
                 var query = context.DjSets
                     .Include(ds => ds.Artist)
                     .Include(ds => ds.Venue)
