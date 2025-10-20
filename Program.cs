@@ -1,5 +1,6 @@
 using _1001;
 using Microsoft.EntityFrameworkCore;
+using Spectre.Console;
 
 
 public static class Program
@@ -7,464 +8,659 @@ public static class Program
     static void Main(string[] args)
     {
         using var context = new AppDbContext();
-        
+
         // Ensure database is created
-        context.Database.EnsureCreated();
-        
-        Console.WriteLine("=== DJ Set Management System ===\n");
-        
+        AnsiConsole.Status()
+            .Start("Initializing database...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("green"));
+                context.Database.EnsureCreated();
+            });
+
+        ShowWelcomeBanner();
+
         while (true)
         {
-            Console.WriteLine("\n--- Main Menu ---");
-            Console.WriteLine("1. Add new DJ set");
-            Console.WriteLine("2. Query database");
-            Console.WriteLine("3. Exit");
-            Console.Write("\nSelect an option: ");
-            
-            string? choice = Console.ReadLine();
-            
+            AnsiConsole.Clear();
+            ShowWelcomeBanner();
+
+            var choice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold cyan]Main Menu[/]")
+                    .PageSize(10)
+                    .AddChoices(new[] {
+                        "Add new DJ set",
+                        "Query database",
+                        "Update DJ set",
+                        "Delete DJ set",
+                        "Exit"
+                    }));
+
+            AnsiConsole.Clear();
+
             switch (choice)
             {
-                case "1":
+                case "Add new DJ set":
                     AddDjSet(context);
-                    Console.WriteLine("\nDJ Set added successfully!");
+                    AnsiConsole.MarkupLine("\n[green]DJ Set added successfully![/]");
+                    AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+                    Console.ReadKey(true);
                     break;
-                case "2":
+                case "Query database":
                     QueryDatabase(context);
                     break;
-                case "3":
-                    Console.WriteLine("\nGoodbye!");
-                    return;
-                default:
-                    Console.WriteLine("\nInvalid option. Please try again.");
+                case "Update DJ set":
+                    UpdateDjSet(context);
                     break;
+                case "Delete DJ set":
+                    DeleteDjSet(context);
+                    break;
+                case "Exit":
+                    ShowGoodbyeMessage();
+                    return;
             }
         }
+    }
+
+    static void ShowWelcomeBanner()
+    {
+        var banner = new FigletText("DJ SETS")
+            .Centered()
+            .Color(Color.Cyan1);
+
+        AnsiConsole.Write(banner);
+
+        var rule = new Rule("[yellow]Management System[/]")
+        {
+            Justification = Justify.Center
+        };
+        AnsiConsole.Write(rule);
+        AnsiConsole.WriteLine();
+    }
+
+    static void ShowGoodbyeMessage()
+    {
+        AnsiConsole.Clear();
+        var panel = new Panel(
+            new Markup("[cyan]Thanks for using[/] [bold yellow]DJ Set Management System[/]!\n[dim]See you next time![/]")
+                .Centered())
+        {
+            Border = BoxBorder.Double,
+            BorderStyle = new Style(Color.Cyan1)
+        };
+        AnsiConsole.Write(panel);
     }
 
     static void QueryDatabase(AppDbContext context)
     {
         while (true)
         {
-            Console.WriteLine("\n--- Query Database ---");
-            Console.WriteLine("1. Search DJ sets by artist");
-            Console.WriteLine("2. Search DJ sets by venue");
-            Console.WriteLine("3. Search DJ sets by date range");
-            Console.WriteLine("4. View all DJ sets");
-            Console.WriteLine("5. Search songs by title");
-            Console.WriteLine("6. Search songs by artist");
-            Console.WriteLine("7. Search songs by genre");
-            Console.WriteLine("8. View DJ set details (with songs)");
-            Console.WriteLine("9. View set analytics");
-            Console.WriteLine("10. Back to main menu");
-            Console.Write("\nSelect query option: ");
-            
-            string? choice = Console.ReadLine();
-            
+            AnsiConsole.Clear();
+
+            var rule = new Rule("[cyan]Query Database[/]")
+            {
+                Justification = Justify.Left
+            };
+            AnsiConsole.Write(rule);
+            AnsiConsole.WriteLine();
+
+            var choice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold yellow]Select a query option:[/]")
+                    .PageSize(15)
+                    .AddChoices(new[] {
+                        "Search DJ sets by artist",
+                        "Search DJ sets by venue",
+                        "Search DJ sets by date range",
+                        "View all DJ sets",
+                        "Search songs by title",
+                        "Search songs by artist",
+                        "Search songs by genre",
+                        "View DJ set details (with songs)",
+                        "View set analytics",
+                        "Back to main menu"
+                    }));
+
+            AnsiConsole.Clear();
+
             switch (choice)
             {
-                case "1":
+                case "Search DJ sets by artist":
                     SearchDjSetsByArtist(context);
                     break;
-                case "2":
+                case "Search DJ sets by venue":
                     SearchDjSetsByVenue(context);
                     break;
-                case "3":
+                case "Search DJ sets by date range":
                     SearchDjSetsByDateRange(context);
                     break;
-                case "4":
+                case "View all DJ sets":
                     ViewAllDjSets(context);
                     break;
-                case "5":
+                case "Search songs by title":
                     SearchSongsByTitle(context);
                     break;
-                case "6":
+                case "Search songs by artist":
                     SearchSongsByArtist(context);
                     break;
-                case "7":
+                case "Search songs by genre":
                     SearchSongsByGenre(context);
                     break;
-                case "8":
+                case "View DJ set details (with songs)":
                     ViewDjSetDetails(context);
                     break;
-                case "9":
+                case "View set analytics":
                     ViewSetAnalytics(context);
                     break;
-                case "10":
+                case "Back to main menu":
                     return;
-                default:
-                    Console.WriteLine("\nInvalid option. Please try again.");
-                    break;
+            }
+
+            if (choice != "Back to main menu")
+            {
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+                Console.ReadKey(true);
             }
         }
     }
 
     static void SearchDjSetsByArtist(AppDbContext context)
     {
-        Console.Write("\nEnter artist name to search: ");
-        string? searchName = Console.ReadLine();
-        
+        var searchName = AnsiConsole.Ask<string>("[cyan]Enter artist name to search:[/]");
+
         if (string.IsNullOrWhiteSpace(searchName))
         {
-            Console.WriteLine("Search term cannot be empty.");
+            AnsiConsole.MarkupLine("[red]Search term cannot be empty.[/]");
             return;
         }
-        
-        var djSets = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.Venue)
-            .Where(ds => ds.Artist.DisplayName.Contains(searchName))
-            .OrderByDescending(ds => ds.SetDatetime)
-            .ToList();
-        
+
+        var djSets = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.Venue)
+                    .Where(ds => ds.Artist.DisplayName.Contains(searchName))
+                    .OrderByDescending(ds => ds.SetDatetime)
+                    .ToList();
+            });
+
         if (!djSets.Any())
         {
-            Console.WriteLine($"\nNo DJ sets found for artist containing '{searchName}'.");
+            AnsiConsole.MarkupLine($"[yellow]No DJ sets found for artist containing '{searchName}'.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {djSets.Count} DJ Set(s) ---");
-        foreach (var djSet in djSets)
-        {
-            DisplayDjSetSummary(djSet);
-        }
+
+        DisplayDjSetsTable(djSets, $"Found {djSets.Count} DJ Set(s) for '{searchName}'");
     }
 
     static void SearchDjSetsByVenue(AppDbContext context)
     {
-        Console.Write("\nEnter venue name to search: ");
-        string? searchName = Console.ReadLine();
-        
+        var searchName = AnsiConsole.Ask<string>("[cyan]Enter venue name to search:[/]");
+
         if (string.IsNullOrWhiteSpace(searchName))
         {
-            Console.WriteLine("Search term cannot be empty.");
+            AnsiConsole.MarkupLine("[red]Search term cannot be empty.[/]");
             return;
         }
-        
-        var djSets = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.Venue)
-            .Where(ds => ds.Venue != null && ds.Venue.Name != null && ds.Venue.Name.Contains(searchName))
-            .OrderByDescending(ds => ds.SetDatetime)
-            .ToList();
-        
+
+        var djSets = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.Venue)
+                    .Where(ds => ds.Venue != null && ds.Venue.Name != null && ds.Venue.Name.Contains(searchName))
+                    .OrderByDescending(ds => ds.SetDatetime)
+                    .ToList();
+            });
+
         if (!djSets.Any())
         {
-            Console.WriteLine($"\nNo DJ sets found for venue containing '{searchName}'.");
+            AnsiConsole.MarkupLine($"[yellow]No DJ sets found for venue containing '{searchName}'.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {djSets.Count} DJ Set(s) ---");
-        foreach (var djSet in djSets)
-        {
-            DisplayDjSetSummary(djSet);
-        }
+
+        DisplayDjSetsTable(djSets, $"Found {djSets.Count} DJ Set(s) at '{searchName}'");
     }
 
     static void SearchDjSetsByDateRange(AppDbContext context)
     {
-        Console.Write("\nEnter start date (yyyy-MM-dd) or press Enter to skip: ");
-        string? startInput = Console.ReadLine();
+        var startInput = AnsiConsole.Ask<string>("[cyan]Enter start date (yyyy-MM-dd) or press Enter to skip:[/]", string.Empty);
         DateTime? startDate = null;
         if (!string.IsNullOrWhiteSpace(startInput) && DateTime.TryParse(startInput, out var start))
         {
             startDate = DateTime.SpecifyKind(start, DateTimeKind.Utc);
         }
-        
-        Console.Write("Enter end date (yyyy-MM-dd) or press Enter to skip: ");
-        string? endInput = Console.ReadLine();
+
+        var endInput = AnsiConsole.Ask<string>("[cyan]Enter end date (yyyy-MM-dd) or press Enter to skip:[/]", string.Empty);
         DateTime? endDate = null;
         if (!string.IsNullOrWhiteSpace(endInput) && DateTime.TryParse(endInput, out var end))
         {
             endDate = DateTime.SpecifyKind(end.AddDays(1).AddSeconds(-1), DateTimeKind.Utc);
         }
-        
-        var query = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.Venue)
-            .AsQueryable();
-        
-        if (startDate.HasValue)
-        {
-            query = query.Where(ds => ds.SetDatetime >= startDate.Value);
-        }
-        
-        if (endDate.HasValue)
-        {
-            query = query.Where(ds => ds.SetDatetime <= endDate.Value);
-        }
-        
-        var djSets = query.OrderByDescending(ds => ds.SetDatetime).ToList();
-        
+
+        var djSets = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+            
+                var query = context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.Venue)
+                    .AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(ds => ds.SetDatetime >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(ds => ds.SetDatetime <= endDate.Value);
+                }
+
+                return query.OrderByDescending(ds => ds.SetDatetime).ToList();
+            });
+
         if (!djSets.Any())
         {
-            Console.WriteLine("\nNo DJ sets found in the specified date range.");
+            AnsiConsole.MarkupLine("[yellow]No DJ sets found in the specified date range.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {djSets.Count} DJ Set(s) ---");
-        foreach (var djSet in djSets)
-        {
-            DisplayDjSetSummary(djSet);
-        }
+
+        var dateRangeText = startDate.HasValue && endDate.HasValue
+            ? $"from {startDate.Value:yyyy-MM-dd} to {endDate.Value:yyyy-MM-dd}"
+            : startDate.HasValue ? $"from {startDate.Value:yyyy-MM-dd}"
+            : endDate.HasValue ? $"until {endDate.Value:yyyy-MM-dd}"
+            : "all dates";
+
+        DisplayDjSetsTable(djSets, $"Found {djSets.Count} DJ Set(s) {dateRangeText}");
     }
 
     static void ViewAllDjSets(AppDbContext context)
     {
-        var djSets = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.Venue)
-            .OrderByDescending(ds => ds.SetDatetime)
-            .ToList();
-        
+        var djSets = AnsiConsole.Status()
+            .Start("Loading DJ sets...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.Venue)
+                    .OrderByDescending(ds => ds.SetDatetime)
+                    .ToList();
+            });
+
         if (!djSets.Any())
         {
-            Console.WriteLine("\nNo DJ sets found in the database.");
+            AnsiConsole.MarkupLine("[yellow]No DJ sets found in the database.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- All DJ Sets ({djSets.Count} total) ---");
-        foreach (var djSet in djSets)
-        {
-            DisplayDjSetSummary(djSet);
-        }
+
+        DisplayDjSetsTable(djSets, $"All DJ Sets ({djSets.Count} total)");
     }
 
     static void SearchSongsByTitle(AppDbContext context)
     {
-        Console.Write("\nEnter song title to search: ");
-        string? searchTitle = Console.ReadLine();
-        
+        var searchTitle = AnsiConsole.Ask<string>("[cyan]Enter song title to search:[/]");
+
         if (string.IsNullOrWhiteSpace(searchTitle))
         {
-            Console.WriteLine("Search term cannot be empty.");
+            AnsiConsole.MarkupLine("[red]Search term cannot be empty.[/]");
             return;
         }
-        
-        var songs = context.Songs
-            .Include(s => s.SongArtists)
-            .ThenInclude(sa => sa.Artist)
-            .Where(s => s.Title.Contains(searchTitle))
-            .ToList();
-        
+
+        var songs = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.Songs
+                    .Include(s => s.SongArtists)
+                    .ThenInclude(sa => sa.Artist)
+                    .Where(s => s.Title.Contains(searchTitle))
+                    .ToList();
+            });
+
         if (!songs.Any())
         {
-            Console.WriteLine($"\nNo songs found with title containing '{searchTitle}'.");
+            AnsiConsole.MarkupLine($"[yellow]No songs found with title containing '{searchTitle}'.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {songs.Count} Song(s) ---");
-        foreach (var song in songs)
-        {
-            DisplaySongSummary(song);
-        }
+
+        DisplaySongsTable(songs, $"Found {songs.Count} Song(s) matching '{searchTitle}'");
     }
 
     static void SearchSongsByArtist(AppDbContext context)
     {
-        Console.Write("\nEnter artist name to search: ");
-        string? searchName = Console.ReadLine();
-        
+        var searchName = AnsiConsole.Ask<string>("[cyan]Enter artist name to search:[/]");
+
         if (string.IsNullOrWhiteSpace(searchName))
         {
-            Console.WriteLine("Search term cannot be empty.");
+            AnsiConsole.MarkupLine("[red]Search term cannot be empty.[/]");
             return;
         }
-        
-        var songs = context.Songs
-            .Include(s => s.SongArtists)
-            .ThenInclude(sa => sa.Artist)
-            .Where(s => s.SongArtists.Any(sa => sa.Artist.DisplayName.Contains(searchName)))
-            .ToList();
-        
+
+        var songs = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.Songs
+                    .Include(s => s.SongArtists)
+                    .ThenInclude(sa => sa.Artist)
+                    .Where(s => s.SongArtists.Any(sa => sa.Artist.DisplayName.Contains(searchName)))
+                    .ToList();
+            });
+
         if (!songs.Any())
         {
-            Console.WriteLine($"\nNo songs found for artist containing '{searchName}'.");
+            AnsiConsole.MarkupLine($"[yellow]No songs found for artist containing '{searchName}'.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {songs.Count} Song(s) ---");
-        foreach (var song in songs)
-        {
-            DisplaySongSummary(song);
-        }
+
+        DisplaySongsTable(songs, $"Found {songs.Count} Song(s) by '{searchName}'");
     }
 
     static void SearchSongsByGenre(AppDbContext context)
     {
-        Console.Write("\nEnter genre to search: ");
-        string? searchGenre = Console.ReadLine();
-        
+        var searchGenre = AnsiConsole.Ask<string>("[cyan]Enter genre to search:[/]");
+
         if (string.IsNullOrWhiteSpace(searchGenre))
         {
-            Console.WriteLine("Search term cannot be empty.");
+            AnsiConsole.MarkupLine("[red]Search term cannot be empty.[/]");
             return;
         }
-        
-        var songs = context.Songs
-            .Include(s => s.SongArtists)
-            .ThenInclude(sa => sa.Artist)
-            .Where(s => s.Genre != null && s.Genre.Contains(searchGenre))
-            .ToList();
-        
+
+        var songs = AnsiConsole.Status()
+            .Start("Searching...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.Songs
+                    .Include(s => s.SongArtists)
+                    .ThenInclude(sa => sa.Artist)
+                    .Where(s => s.Genre != null && s.Genre.Contains(searchGenre))
+                    .ToList();
+            });
+
         if (!songs.Any())
         {
-            Console.WriteLine($"\nNo songs found with genre containing '{searchGenre}'.");
+            AnsiConsole.MarkupLine($"[yellow]No songs found with genre containing '{searchGenre}'.[/]");
             return;
         }
-        
-        Console.WriteLine($"\n--- Found {songs.Count} Song(s) ---");
-        foreach (var song in songs)
-        {
-            DisplaySongSummary(song);
-        }
+
+        DisplaySongsTable(songs, $"Found {songs.Count} {searchGenre} Song(s)");
     }
 
     static void ViewDjSetDetails(AppDbContext context)
     {
-        Console.Write("\nEnter DJ set ID: ");
-        if (!int.TryParse(Console.ReadLine(), out int setId))
-        {
-            Console.WriteLine("Invalid DJ set ID.");
-            return;
-        }
-        
-        var djSet = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.Venue)
-            .Include(ds => ds.SetSongs)
-            .ThenInclude(ss => ss.Song)
-            .ThenInclude(s => s.SongArtists)
-            .ThenInclude(sa => sa.Artist)
-            .FirstOrDefault(ds => ds.DjSetId == setId);
-        
+        var setId = AnsiConsole.Ask<int>("[cyan]Enter DJ set ID:[/]");
+
+        var djSet = AnsiConsole.Status()
+            .Start("Loading DJ set details...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.Venue)
+                    .Include(ds => ds.SetSongs)
+                    .ThenInclude(ss => ss.Song)
+                    .ThenInclude(s => s.SongArtists)
+                    .ThenInclude(sa => sa.Artist)
+                    .FirstOrDefault(ds => ds.DjSetId == setId);
+            });
+
         if (djSet == null)
         {
-            Console.WriteLine($"\nDJ set with ID {setId} not found.");
+            AnsiConsole.MarkupLine($"[red]DJ set with ID {setId} not found.[/]");
             return;
         }
-        
-        Console.WriteLine("\n=== DJ Set Details ===");
-        Console.WriteLine($"ID: {djSet.DjSetId}");
-        Console.WriteLine($"Title: {djSet.Title ?? "N/A"}");
-        Console.WriteLine($"Artist: {djSet.Artist.DisplayName}");
-        Console.WriteLine($"Date/Time: {(djSet.SetDatetime.HasValue ? djSet.SetDatetime.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")}");
-        Console.WriteLine($"Duration: {(djSet.DurationMinutes.HasValue ? $"{djSet.DurationMinutes.Value} minutes" : "N/A")}");
-        Console.WriteLine($"Venue: {djSet.Venue?.Name ?? "N/A"}");
-        Console.WriteLine($"Source URL: {djSet.SourceUrl ?? "N/A"}");
-        
+
+        // Create details panel
+        var detailsGrid = new Grid()
+            .AddColumn(new GridColumn().NoWrap().PadRight(2))
+            .AddColumn();
+
+        detailsGrid.AddRow("[bold yellow]ID:[/]", $"[cyan]{djSet.DjSetId}[/]");
+        detailsGrid.AddRow("[bold yellow]Title:[/]", $"[white]{djSet.Title ?? "N/A"}[/]");
+        detailsGrid.AddRow("[bold yellow]Artist:[/]", $"[green]{djSet.Artist.DisplayName}[/]");
+        detailsGrid.AddRow("[bold yellow]Date/Time:[/]", $"[cyan]{(djSet.SetDatetime.HasValue ? djSet.SetDatetime.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")}[/]");
+        detailsGrid.AddRow("[bold yellow]Duration:[/]", $"[cyan]{(djSet.DurationMinutes.HasValue ? $"{djSet.DurationMinutes.Value} minutes" : "N/A")}[/]");
+        detailsGrid.AddRow("[bold yellow]Venue:[/]", $"[magenta]{djSet.Venue?.Name ?? "N/A"}[/]");
+        detailsGrid.AddRow("[bold yellow]Source URL:[/]", $"[dim]{djSet.SourceUrl ?? "N/A"}[/]");
+
+        var panel = new Panel(detailsGrid)
+        {
+            Header = new PanelHeader($"DJ Set Details", Justify.Center),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Cyan1)
+        };
+
+        AnsiConsole.Write(panel);
+        AnsiConsole.WriteLine();
+
         if (djSet.SetSongs.Any())
         {
-            Console.WriteLine($"\n--- Tracklist ({djSet.SetSongs.Count} songs) ---");
+            var tracklistTable = new Table()
+                .Border(TableBorder.Rounded)
+                .BorderColor(Color.Grey)
+                .AddColumn(new TableColumn("[yellow]#[/]").Centered())
+                .AddColumn(new TableColumn("[yellow]Timestamp[/]").Centered())
+                .AddColumn(new TableColumn("[yellow]Title[/]"))
+                .AddColumn(new TableColumn("[yellow]Artist(s)[/]"));
+
+            int trackNumber = 1;
             foreach (var setSong in djSet.SetSongs.OrderBy(ss => ss.TimestampInSetSeconds ?? int.MaxValue))
             {
                 var artists = string.Join(", ", setSong.Song.SongArtists.Select(sa => sa.Artist.DisplayName));
-                var timestamp = setSong.TimestampInSetSeconds.HasValue 
-                    ? $"[{TimeSpan.FromSeconds(setSong.TimestampInSetSeconds.Value):mm\\:ss}] " 
-                    : "";
-                Console.WriteLine($"{timestamp}{setSong.Song.Title} - {artists}");
+                var timestamp = setSong.TimestampInSetSeconds.HasValue
+                    ? TimeSpan.FromSeconds(setSong.TimestampInSetSeconds.Value).ToString(@"mm\:ss")
+                    : "---";
+
+                tracklistTable.AddRow(
+                    $"[dim]{trackNumber}[/]",
+                    $"[cyan]{timestamp}[/]",
+                    $"[white]{setSong.Song.Title}[/]",
+                    $"[green]{artists}[/]"
+                );
+                trackNumber++;
             }
+
+            var tracklistPanel = new Panel(tracklistTable)
+            {
+                Header = new PanelHeader($"Tracklist ({djSet.SetSongs.Count} songs)", Justify.Left),
+                Border = BoxBorder.Rounded,
+                BorderStyle = new Style(Color.Green)
+            };
+
+            AnsiConsole.Write(tracklistPanel);
         }
         else
         {
-            Console.WriteLine("\nNo songs in this set.");
+            AnsiConsole.MarkupLine("[dim]No songs in this set.[/]");
         }
     }
 
     static void ViewSetAnalytics(AppDbContext context)
     {
-        Console.Write("\nEnter DJ set ID: ");
-        if (!int.TryParse(Console.ReadLine(), out int setId))
-        {
-            Console.WriteLine("Invalid DJ set ID.");
-            return;
-        }
-        
-        var djSet = context.DjSets
-            .Include(ds => ds.Artist)
-            .Include(ds => ds.SetAnalytics)
-            .FirstOrDefault(ds => ds.DjSetId == setId);
-        
+        var setId = AnsiConsole.Ask<int>("[cyan]Enter DJ set ID:[/]");
+
+        var djSet = AnsiConsole.Status()
+            .Start("Loading analytics...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("yellow"));
+                return context.DjSets
+                    .Include(ds => ds.Artist)
+                    .Include(ds => ds.SetAnalytics)
+                    .FirstOrDefault(ds => ds.DjSetId == setId);
+            });
+
         if (djSet == null)
         {
-            Console.WriteLine($"\nDJ set with ID {setId} not found.");
+            AnsiConsole.MarkupLine($"[red]DJ set with ID {setId} not found.[/]");
             return;
         }
-        
-        Console.WriteLine("\n=== DJ Set Analytics ===");
-        Console.WriteLine($"Set: {djSet.Title ?? "N/A"} by {djSet.Artist.DisplayName}");
-        
+
+        var setInfo = $"[bold white]{djSet.Title ?? "N/A"}[/] by [green]{djSet.Artist.DisplayName}[/]";
+
         if (djSet.SetAnalytics == null)
         {
-            Console.WriteLine("\nNo analytics data available for this set.");
+            var noDataPanel = new Panel(
+                new Markup($"{setInfo}\n\n[yellow]No analytics data available for this set.[/]"))
+            {
+                Header = new PanelHeader("DJ Set Analytics", Justify.Center),
+                Border = BoxBorder.Rounded,
+                BorderStyle = new Style(Color.Yellow)
+            };
+            AnsiConsole.Write(noDataPanel);
             return;
         }
-        
-        Console.WriteLine($"\nTickets Sold: {djSet.SetAnalytics.TicketsSold?.ToString() ?? "N/A"}");
-        Console.WriteLine($"Attendance: {djSet.SetAnalytics.AttendanceCount?.ToString() ?? "N/A"}");
-        Console.WriteLine($"Gross Revenue: {(djSet.SetAnalytics.GrossRevenue.HasValue ? $"${djSet.SetAnalytics.GrossRevenue.Value}" : "N/A")}");
-        Console.WriteLine($"Stream Count: {djSet.SetAnalytics.StreamCount?.ToString() ?? "N/A"}");
-        Console.WriteLine($"Like Count: {djSet.SetAnalytics.LikeCount?.ToString() ?? "N/A"}");
+
+        var analyticsGrid = new Grid()
+            .AddColumn(new GridColumn().NoWrap().PadRight(2))
+            .AddColumn();
+
+        analyticsGrid.AddRow("[bold yellow]Set:[/]", setInfo);
+        analyticsGrid.AddEmptyRow();
+        analyticsGrid.AddRow("[bold cyan]Tickets Sold:[/]", $"[white]{djSet.SetAnalytics.TicketsSold?.ToString("N0") ?? "N/A"}[/]");
+        analyticsGrid.AddRow("[bold cyan]Attendance:[/]", $"[white]{djSet.SetAnalytics.AttendanceCount?.ToString("N0") ?? "N/A"}[/]");
+        analyticsGrid.AddRow("[bold green]Gross Revenue:[/]", $"[white]{(djSet.SetAnalytics.GrossRevenue.HasValue ? $"${djSet.SetAnalytics.GrossRevenue.Value:N2}" : "N/A")}[/]");
+        analyticsGrid.AddRow("[bold magenta]Stream Count:[/]", $"[white]{djSet.SetAnalytics.StreamCount?.ToString("N0") ?? "N/A"}[/]");
+        analyticsGrid.AddRow("[bold red]Like Count:[/]", $"[white]{djSet.SetAnalytics.LikeCount?.ToString("N0") ?? "N/A"}[/]");
+
+        var panel = new Panel(analyticsGrid)
+        {
+            Header = new PanelHeader("DJ Set Analytics", Justify.Center),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Cyan1)
+        };
+
+        AnsiConsole.Write(panel);
     }
 
-    static void DisplayDjSetSummary(DjSet djSet)
+    static void DisplayDjSetsTable(List<DjSet> djSets, string title)
     {
-        Console.WriteLine($"\nID: {djSet.DjSetId} | {djSet.Title ?? "Untitled"}");
-        Console.WriteLine($"  Artist: {djSet.Artist.DisplayName}");
-        Console.WriteLine($"  Date: {(djSet.SetDatetime.HasValue ? djSet.SetDatetime.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")}");
-        Console.WriteLine($"  Venue: {djSet.Venue?.Name ?? "N/A"}");
-        Console.WriteLine($"  Duration: {(djSet.DurationMinutes.HasValue ? $"{djSet.DurationMinutes.Value} min" : "N/A")}");
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderColor(Color.Cyan1)
+            .AddColumn(new TableColumn("[yellow]ID[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Title[/]"))
+            .AddColumn(new TableColumn("[yellow]Artist[/]"))
+            .AddColumn(new TableColumn("[yellow]Date[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Duration[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Venue[/]"));
+
+        foreach (var djSet in djSets)
+        {
+            table.AddRow(
+                $"[cyan]{djSet.DjSetId}[/]",
+                $"[white]{djSet.Title ?? "Untitled"}[/]",
+                $"[green]{djSet.Artist.DisplayName}[/]",
+                $"[cyan]{(djSet.SetDatetime.HasValue ? djSet.SetDatetime.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")}[/]",
+                $"[yellow]{(djSet.DurationMinutes.HasValue ? $"{djSet.DurationMinutes.Value} min" : "N/A")}[/]",
+                $"[magenta]{djSet.Venue?.Name ?? "N/A"}[/]"
+            );
+        }
+
+        var panel = new Panel(table)
+        {
+            Header = new PanelHeader($"{title}", Justify.Left),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Cyan1)
+        };
+
+        AnsiConsole.Write(panel);
     }
 
-    static void DisplaySongSummary(Song song)
+    static void DisplaySongsTable(List<Song> songs, string title)
     {
-        var artists = string.Join(", ", song.SongArtists.Select(sa => sa.Artist.DisplayName));
-        Console.WriteLine($"\nID: {song.SongId} | {song.Title}");
-        Console.WriteLine($"  Artist(s): {artists}");
-        Console.WriteLine($"  Genre: {song.Genre ?? "N/A"} | BPM: {song.Bpm?.ToString() ?? "N/A"}");
-        Console.WriteLine($"  Duration: {(song.DurationSeconds.HasValue ? TimeSpan.FromSeconds(song.DurationSeconds.Value).ToString(@"mm\:ss") : "N/A")}");
-        Console.WriteLine($"  Release Date: {(song.ReleaseDate.HasValue ? song.ReleaseDate.Value.ToString("yyyy-MM-dd") : "N/A")}");
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderColor(Color.Green)
+            .AddColumn(new TableColumn("[yellow]ID[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Title[/]"))
+            .AddColumn(new TableColumn("[yellow]Artist(s)[/]"))
+            .AddColumn(new TableColumn("[yellow]Genre[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]BPM[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Duration[/]").Centered())
+            .AddColumn(new TableColumn("[yellow]Release Date[/]").Centered());
+
+        foreach (var song in songs)
+        {
+            var artists = string.Join(", ", song.SongArtists.Select(sa => sa.Artist.DisplayName));
+            table.AddRow(
+                $"[cyan]{song.SongId}[/]",
+                $"[white]{song.Title}[/]",
+                $"[green]{artists}[/]",
+                $"[magenta]{song.Genre ?? "N/A"}[/]",
+                $"[yellow]{song.Bpm?.ToString() ?? "N/A"}[/]",
+                $"[cyan]{(song.DurationSeconds.HasValue ? TimeSpan.FromSeconds(song.DurationSeconds.Value).ToString(@"mm\:ss") : "N/A")}[/]",
+                $"[cyan]{(song.ReleaseDate.HasValue ? song.ReleaseDate.Value.ToString("yyyy-MM-dd") : "N/A")}[/]"
+            );
+        }
+
+        var panel = new Panel(table)
+        {
+            Header = new PanelHeader($"{title}", Justify.Left),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Green)
+        };
+
+        AnsiConsole.Write(panel);
     }
 
     static void AddDjSet(AppDbContext context)
     {
+        var rule = new Rule("[cyan]Add New DJ Set[/]")
+        {
+            Justification = Justify.Left
+        };
+        AnsiConsole.Write(rule);
+        AnsiConsole.WriteLine();
+
         // Get or create artist for the DJ set
-        Console.WriteLine("--- DJ Set Artist ---");
+        AnsiConsole.MarkupLine("[bold yellow]DJ Set Artist[/]");
         var artist = GetOrCreateArtist(context);
-        
+        AnsiConsole.WriteLine();
+
         // Get DJ set basic information
-        Console.WriteLine("\n--- DJ Set Information ---");
-        Console.Write("Enter DJ set title: ");
-        string? title = Console.ReadLine();
-        
-        Console.Write("Enter set date and time (yyyy-MM-dd HH:mm) or press Enter to skip: ");
-        string? dateInput = Console.ReadLine();
+        AnsiConsole.MarkupLine("[bold yellow]DJ Set Information[/]");
+        var title = AnsiConsole.Ask<string>("[cyan]Enter DJ set title:[/]");
+
+        var dateInput = AnsiConsole.Ask<string>("[cyan]Enter set date and time (yyyy-MM-dd HH:mm) or press Enter to skip:[/]", string.Empty);
         DateTime? setDateTime = null;
         if (!string.IsNullOrWhiteSpace(dateInput) && DateTime.TryParse(dateInput, out var parsedDate))
         {
             setDateTime = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
         }
-        
-        Console.Write("Enter duration in minutes: ");
-        int? durationMinutes = null;
-        if (int.TryParse(Console.ReadLine(), out var duration))
-        {
-            durationMinutes = duration;
-        }
-        
-        Console.Write("Enter source URL (or press Enter to skip): ");
-        string? sourceUrl = Console.ReadLine();
+
+        var durationMinutes = AnsiConsole.Ask<int?>("[cyan]Enter duration in minutes (or 0 to skip):[/]", 0);
+        if (durationMinutes == 0) durationMinutes = null;
+
+        var sourceUrl = AnsiConsole.Ask<string>("[cyan]Enter source URL (or press Enter to skip):[/]", string.Empty);
         if (string.IsNullOrWhiteSpace(sourceUrl)) sourceUrl = null;
-        
+
+        AnsiConsole.WriteLine();
+
         // Get or create venue (optional)
-        Console.WriteLine("\n--- Venue Information ---");
-        Console.Write("Add venue? (y/n): ");
+        AnsiConsole.MarkupLine("[bold yellow]Venue Information[/]");
         Venue? venue = null;
-        if (Console.ReadLine()?.ToLower() == "y")
+        if (AnsiConsole.Confirm("Add venue?"))
         {
             venue = GetOrCreateVenue(context);
         }
-        
+
         // Create the DJ set
         var djSet = new DjSet
         {
@@ -475,126 +671,147 @@ public static class Program
             SourceUrl = sourceUrl,
             Venue = venue
         };
-        
-        context.DjSets.Add(djSet);
-        context.SaveChanges();
-        
+
+        AnsiConsole.Status()
+            .Start("Saving DJ set...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("green"));
+                context.DjSets.Add(djSet);
+                context.SaveChanges();
+            });
+
+        AnsiConsole.WriteLine();
+
         // Add songs to the set
-        Console.WriteLine("\n--- Add Songs to Set ---");
+        AnsiConsole.MarkupLine("[bold yellow]Add Songs to Set[/]");
         AddSongsToSet(context, djSet);
-        
+
+        AnsiConsole.WriteLine();
+
         // Optionally add analytics
-        Console.WriteLine("\n--- Analytics (Optional) ---");
-        Console.Write("Add analytics data? (y/n): ");
-        if (Console.ReadLine()?.ToLower() == "y")
+        AnsiConsole.MarkupLine("[bold yellow]Analytics (Optional)[/]");
+        if (AnsiConsole.Confirm("Add analytics data?", false))
         {
             AddSetAnalytics(context, djSet);
         }
-        
+
         context.SaveChanges();
     }
 
     static Artist GetOrCreateArtist(AppDbContext context)
     {
-        Console.Write("Search for existing artist by name (or press Enter to create new): ");
-        string? searchName = Console.ReadLine();
-        
+        var searchName = AnsiConsole.Ask<string>("[cyan]Search for existing artist by name (or press Enter to create new):[/]", string.Empty);
+
         if (!string.IsNullOrWhiteSpace(searchName))
         {
             var existingArtists = context.Artists
                 .Where(a => a.DisplayName.Contains(searchName))
                 .ToList();
-            
+
             if (existingArtists.Any())
             {
-                Console.WriteLine("\nFound artists:");
-                for (int i = 0; i < existingArtists.Count; i++)
+                var choices = existingArtists
+                    .Select(a => $"{Markup.Escape(a.DisplayName)} ({Markup.Escape(a.Country ?? "N/A")})")
+                    .ToList();
+                var createNewOption = Markup.Escape("[Create new artist]");
+                choices.Add(createNewOption);
+
+                var selected = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[green]Found artists - select one:[/]")
+                        .AddChoices(choices));
+
+                if (selected != createNewOption)
                 {
-                    Console.WriteLine($"{i + 1}. {existingArtists[i].DisplayName} ({existingArtists[i].Country ?? "N/A"})");
-                }
-                
-                Console.Write("Select artist (number) or 0 to create new: ");
-                if (int.TryParse(Console.ReadLine(), out int selection) && selection > 0 && selection <= existingArtists.Count)
-                {
-                    return existingArtists[selection - 1];
+                    var index = choices.IndexOf(selected);
+                    return existingArtists[index];
                 }
             }
+            else
+            {
+                AnsiConsole.MarkupLine("[yellow]No artists found. Creating new...[/]");
+            }
         }
-        
+
         // Create new artist
-        Console.WriteLine("\n--- Create New Artist ---");
-        Console.Write("Enter artist display name: ");
-        string displayName = Console.ReadLine() ?? "Unknown Artist";
-        
-        Console.Write("Enter country (or press Enter to skip): ");
-        string? country = Console.ReadLine();
+        AnsiConsole.MarkupLine("[dim]--- Create New Artist ---[/]");
+        var displayName = AnsiConsole.Ask<string>("[cyan]Enter artist display name:[/]", "Unknown Artist");
+
+        var country = AnsiConsole.Ask<string>("[cyan]Enter country (or press Enter to skip):[/]", string.Empty);
         if (string.IsNullOrWhiteSpace(country)) country = null;
-        
+
         var newArtist = new Artist
         {
             DisplayName = displayName,
             Country = country
         };
-        
+
         context.Artists.Add(newArtist);
         context.SaveChanges();
-        
+
+        AnsiConsole.MarkupLine($"[green]Created artist: {displayName}[/]");
+
         return newArtist;
     }
 
     static Venue? GetOrCreateVenue(AppDbContext context)
     {
-        Console.Write("Search for existing venue by name (or press Enter to create new): ");
-        string? searchName = Console.ReadLine();
-        
+        var searchName = AnsiConsole.Ask<string>("[cyan]Search for existing venue by name (or press Enter to create new):[/]", string.Empty);
+
         if (!string.IsNullOrWhiteSpace(searchName))
         {
             var existingVenues = context.Venues
                 .Where(v => v.Name != null && v.Name.Contains(searchName))
                 .ToList();
-            
+
             if (existingVenues.Any())
             {
-                Console.WriteLine("\nFound venues:");
-                for (int i = 0; i < existingVenues.Count; i++)
+                var choices = existingVenues
+                    .Select(v => $"{Markup.Escape(v.Name)} - Capacity: {v.Capacity ?? 0}")
+                    .ToList();
+                var createNewOption = Markup.Escape("[Create new venue]");
+                choices.Add(createNewOption);
+
+                var selected = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[green]Found venues - select one:[/]")
+                        .AddChoices(choices));
+
+                if (selected != createNewOption)
                 {
-                    Console.WriteLine($"{i + 1}. {existingVenues[i].Name} - Capacity: {existingVenues[i].Capacity ?? 0}");
-                }
-                
-                Console.Write("Select venue (number) or 0 to create new: ");
-                if (int.TryParse(Console.ReadLine(), out int selection) && selection > 0 && selection <= existingVenues.Count)
-                {
-                    return existingVenues[selection - 1];
+                    var index = choices.IndexOf(selected);
+                    return existingVenues[index];
                 }
             }
+            else
+            {
+                AnsiConsole.MarkupLine("[yellow]No venues found. Creating new...[/]");
+            }
         }
-        
+
         // Create new venue
-        Console.WriteLine("\n--- Create New Venue ---");
-        Console.Write("Enter venue name: ");
-        string? name = Console.ReadLine();
-        
-        Console.Write("Enter capacity: ");
-        int? capacity = null;
-        if (int.TryParse(Console.ReadLine(), out var cap))
-        {
-            capacity = cap;
-        }
-        
-        Console.Write("Enter address: ");
-        string? address = Console.ReadLine();
+        AnsiConsole.MarkupLine("[dim]--- Create New Venue ---[/]");
+        var name = AnsiConsole.Ask<string>("[cyan]Enter venue name:[/]");
+
+        var capacity = AnsiConsole.Ask<int?>("[cyan]Enter capacity (or 0 to skip):[/]", 0);
+        if (capacity == 0) capacity = null;
+
+        var address = AnsiConsole.Ask<string>("[cyan]Enter address (or press Enter to skip):[/]", string.Empty);
         if (string.IsNullOrWhiteSpace(address)) address = null;
-        
+
         var newVenue = new Venue
         {
             Name = name,
             Capacity = capacity,
             Address = address
         };
-        
+
         context.Venues.Add(newVenue);
         context.SaveChanges();
-        
+
+        AnsiConsole.MarkupLine($"[green]Created venue: {name}[/]");
+
         return newVenue;
     }
 
@@ -602,14 +819,12 @@ public static class Program
     {
         while (true)
         {
-            Console.Write("\nAdd a song to the set? (y/n): ");
-            if (Console.ReadLine()?.ToLower() != "y") break;
-            
-            Console.Write("Search for existing song by title (or press Enter to create new): ");
-            string? searchTitle = Console.ReadLine();
-            
+            if (!AnsiConsole.Confirm("Add a song to the set?", false)) break;
+
+            var searchTitle = AnsiConsole.Ask<string>("[cyan]Search for existing song by title (or press Enter to create new):[/]", string.Empty);
+
             Song? song = null;
-            
+
             if (!string.IsNullOrWhiteSpace(searchTitle))
             {
                 var existingSongs = context.Songs
@@ -617,83 +832,77 @@ public static class Program
                     .ThenInclude(sa => sa.Artist)
                     .Where(s => s.Title.Contains(searchTitle))
                     .ToList();
-                
+
                 if (existingSongs.Any())
                 {
-                    Console.WriteLine("\nFound songs:");
-                    for (int i = 0; i < existingSongs.Count; i++)
+                    var choices = existingSongs
+                        .Select(s => $"{Markup.Escape(s.Title)} by {string.Join(", ", s.SongArtists.Select(sa => Markup.Escape(sa.Artist.DisplayName)))}")
+                        .ToList();
+                    var createNewOption = Markup.Escape("[Create new song]");
+                    choices.Add(createNewOption);
+
+                    var selected = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("[green]Found songs - select one:[/]")
+                            .AddChoices(choices));
+
+                    if (selected != createNewOption)
                     {
-                        var artists = string.Join(", ", existingSongs[i].SongArtists.Select(sa => sa.Artist.DisplayName));
-                        Console.WriteLine($"{i + 1}. {existingSongs[i].Title} by {artists}");
-                    }
-                    
-                    Console.Write("Select song (number) or 0 to create new: ");
-                    if (int.TryParse(Console.ReadLine(), out int selection) && selection > 0 && selection <= existingSongs.Count)
-                    {
-                        song = existingSongs[selection - 1];
+                        var index = choices.IndexOf(selected);
+                        song = existingSongs[index];
                     }
                 }
+                else
+                {
+                    AnsiConsole.MarkupLine("[yellow]No songs found. Creating new...[/]");
+                }
             }
-            
+
             // Create new song if not selected
             if (song == null)
             {
                 song = CreateNewSong(context);
             }
-            
+
             // Add song to set with timestamp
-            Console.Write("Enter timestamp in set (seconds) or press Enter to skip: ");
-            int? timestamp = null;
-            if (int.TryParse(Console.ReadLine(), out var ts))
-            {
-                timestamp = ts;
-            }
-            
+            var timestamp = AnsiConsole.Ask<int?>("[cyan]Enter timestamp in set (seconds) or 0 to skip:[/]", 0);
+            if (timestamp == 0) timestamp = null;
+
             var setSong = new SetSong
             {
                 Song = song,
                 DjSet = djSet,
                 TimestampInSetSeconds = timestamp
             };
-            
+
             context.SetSongs.Add(setSong);
             context.SaveChanges();
-            
-            Console.WriteLine($"Added '{song.Title}' to the set!");
+
+            AnsiConsole.MarkupLine($"[green]Added '{song.Title}' to the set![/]");
         }
     }
 
     static Song CreateNewSong(AppDbContext context)
     {
-        Console.WriteLine("\n--- Create New Song ---");
-        Console.Write("Enter song title: ");
-        string title = Console.ReadLine() ?? "Untitled";
-        
-        Console.Write("Enter release date (yyyy-MM-dd) or press Enter to skip: ");
+        AnsiConsole.MarkupLine("[dim]--- Create New Song ---[/]");
+        var title = AnsiConsole.Ask<string>("[cyan]Enter song title:[/]", "Untitled");
+
+        var releaseDateStr = AnsiConsole.Ask<string>("[cyan]Enter release date (yyyy-MM-dd) or press Enter to skip:[/]", string.Empty);
         DateOnly? releaseDate = null;
-        if (DateOnly.TryParse(Console.ReadLine(), out var date))
+        if (DateOnly.TryParse(releaseDateStr, out var date))
         {
             releaseDate = date;
         }
-        
-        Console.Write("Enter duration in seconds: ");
-        int? duration = null;
-        if (int.TryParse(Console.ReadLine(), out var dur))
-        {
-            duration = dur;
-        }
-        
-        Console.Write("Enter genre: ");
-        string? genre = Console.ReadLine();
+
+        var duration = AnsiConsole.Ask<int?>("[cyan]Enter duration in seconds (or 0 to skip):[/]", 0);
+        if (duration == 0) duration = null;
+
+        var genre = AnsiConsole.Ask<string>("[cyan]Enter genre (or press Enter to skip):[/]", string.Empty);
         if (string.IsNullOrWhiteSpace(genre)) genre = null;
-        
-        Console.Write("Enter BPM: ");
-        int? bpm = null;
-        if (int.TryParse(Console.ReadLine(), out var bpmVal))
-        {
-            bpm = bpmVal;
-        }
-        
+
+        var bpm = AnsiConsole.Ask<int?>("[cyan]Enter BPM (or 0 to skip):[/]", 0);
+        if (bpm == 0) bpm = null;
+
         var song = new Song
         {
             Title = title,
@@ -702,71 +911,52 @@ public static class Program
             Genre = genre,
             Bpm = bpm
         };
-        
+
         context.Songs.Add(song);
         context.SaveChanges();
-        
+
+        AnsiConsole.MarkupLine($"[green]Created song: {title}[/]");
+
         // Add artists to song
-        Console.WriteLine("\n--- Add Artists to Song ---");
+        AnsiConsole.MarkupLine("\n[dim]--- Add Artists to Song ---[/]");
         while (true)
         {
-            Console.Write("Add an artist to this song? (y/n): ");
-            if (Console.ReadLine()?.ToLower() != "y") break;
-            
+            if (!AnsiConsole.Confirm("Add an artist to this song?", false)) break;
+
             var artist = GetOrCreateArtist(context);
-            
+
             var songArtist = new SongArtist
             {
                 Song = song,
                 Artist = artist
             };
-            
+
             context.SongArtists.Add(songArtist);
             context.SaveChanges();
-            
-            Console.WriteLine($"Added artist '{artist.DisplayName}' to song!");
+
+            AnsiConsole.MarkupLine($"[green]Added artist '{artist.DisplayName}' to song![/]");
         }
-        
+
         return song;
     }
 
     static void AddSetAnalytics(AppDbContext context, DjSet djSet)
     {
-        Console.Write("Enter tickets sold: ");
-        int? ticketsSold = null;
-        if (int.TryParse(Console.ReadLine(), out var tickets))
-        {
-            ticketsSold = tickets;
-        }
-        
-        Console.Write("Enter attendance count: ");
-        int? attendance = null;
-        if (int.TryParse(Console.ReadLine(), out var att))
-        {
-            attendance = att;
-        }
-        
-        Console.Write("Enter gross revenue: ");
-        int? revenue = null;
-        if (int.TryParse(Console.ReadLine(), out var rev))
-        {
-            revenue = rev;
-        }
-        
-        Console.Write("Enter stream count: ");
-        int? streams = null;
-        if (int.TryParse(Console.ReadLine(), out var str))
-        {
-            streams = str;
-        }
-        
-        Console.Write("Enter like count: ");
-        int? likes = null;
-        if (int.TryParse(Console.ReadLine(), out var lik))
-        {
-            likes = lik;
-        }
-        
+        var ticketsSold = AnsiConsole.Ask<int?>("[cyan]Enter tickets sold (or 0 to skip):[/]", 0);
+        if (ticketsSold == 0) ticketsSold = null;
+
+        var attendance = AnsiConsole.Ask<int?>("[cyan]Enter attendance count (or 0 to skip):[/]", 0);
+        if (attendance == 0) attendance = null;
+
+        var revenue = AnsiConsole.Ask<int?>("[cyan]Enter gross revenue (or 0 to skip):[/]", 0);
+        if (revenue == 0) revenue = null;
+
+        var streams = AnsiConsole.Ask<int?>("[cyan]Enter stream count (or 0 to skip):[/]", 0);
+        if (streams == 0) streams = null;
+
+        var likes = AnsiConsole.Ask<int?>("[cyan]Enter like count (or 0 to skip):[/]", 0);
+        if (likes == 0) likes = null;
+
         var analytics = new SetAnalytics
         {
             DjSet = djSet,
@@ -776,11 +966,136 @@ public static class Program
             StreamCount = streams,
             LikeCount = likes
         };
-        
+
         context.SetAnalytics.Add(analytics);
         context.SaveChanges();
-        
-        Console.WriteLine("Analytics added successfully!");
+
+        AnsiConsole.MarkupLine("[green]Analytics added successfully![/]");
+    }
+
+    static void UpdateDjSet(AppDbContext context)
+    {
+        var rule = new Rule("[cyan]Update DJ Set[/]")
+        {
+            Justification = Justify.Left
+        };
+        AnsiConsole.Write(rule);
+        AnsiConsole.WriteLine();
+
+        var setId = AnsiConsole.Ask<int>("[cyan]Enter DJ set ID to update:[/]");
+
+        var djSet = context.DjSets
+            .Include(ds => ds.Artist)
+            .Include(ds => ds.Venue)
+            .FirstOrDefault(ds => ds.DjSetId == setId);
+
+        if (djSet == null)
+        {
+            AnsiConsole.MarkupLine($"[red]No DJ set found with ID {setId}.[/]");
+            return;
+        }
+
+        AnsiConsole.MarkupLine($"\n[yellow]Editing DJ Set:[/] [white]{djSet.Title ?? "Untitled"}[/] by [green]{djSet.Artist.DisplayName}[/]\n");
+
+        var newTitle = AnsiConsole.Ask<string>($"[cyan]Enter new title (or press Enter to keep '[white]{djSet.Title}[/]'):[/]", djSet.Title ?? string.Empty);
+        if (!string.IsNullOrWhiteSpace(newTitle))
+            djSet.Title = newTitle;
+
+        var currentDate = djSet.SetDatetime.HasValue ? djSet.SetDatetime.Value.ToString("yyyy-MM-dd HH:mm") : "N/A";
+        var dateInput = AnsiConsole.Ask<string>($"[cyan]Enter new date/time (yyyy-MM-dd HH:mm) or press Enter to keep '{currentDate}':[/]", string.Empty);
+        if (!string.IsNullOrWhiteSpace(dateInput) && DateTime.TryParse(dateInput, out var parsedDate))
+            djSet.SetDatetime = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
+
+        var durationInput = AnsiConsole.Ask<string>($"[cyan]Enter new duration (minutes) or press Enter to keep {djSet.DurationMinutes}:[/]", string.Empty);
+        if (int.TryParse(durationInput, out int newDuration))
+            djSet.DurationMinutes = newDuration;
+
+        if (AnsiConsole.Confirm("Change venue?", false))
+            djSet.Venue = GetOrCreateVenue(context);
+
+        if (AnsiConsole.Confirm("Change source URL?", false))
+        {
+            djSet.SourceUrl = AnsiConsole.Ask<string>("[cyan]Enter new source URL:[/]");
+        }
+
+        AnsiConsole.Status()
+            .Start("Saving changes...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("green"));
+                context.SaveChanges();
+            });
+
+        AnsiConsole.MarkupLine("\n[green]DJ Set updated successfully![/]");
+        AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+        Console.ReadKey(true);
+    }
+
+    static void DeleteDjSet(AppDbContext context)
+    {
+        var rule = new Rule("[red]Delete DJ Set[/]")
+        {
+            Justification = Justify.Left
+        };
+        AnsiConsole.Write(rule);
+        AnsiConsole.WriteLine();
+
+        var setId = AnsiConsole.Ask<int>("[cyan]Enter DJ set ID to delete:[/]");
+
+        var djSet = context.DjSets
+            .Include(ds => ds.SetSongs)
+            .Include(ds => ds.SetAnalytics)
+            .FirstOrDefault(ds => ds.DjSetId == setId);
+
+        if (djSet == null)
+        {
+            AnsiConsole.MarkupLine($"[red]No DJ set found with ID {setId}.[/]");
+            AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+            Console.ReadKey(true);
+            return;
+        }
+
+        var warningPanel = new Panel(
+            new Markup($"[yellow]WARNING[/]\n\nYou are about to delete:\n[white]'{djSet.Title ?? "Untitled"}'[/]\n\nThis action cannot be undone!"))
+        {
+            Border = BoxBorder.Heavy,
+            BorderStyle = new Style(Color.Red)
+        };
+
+        AnsiConsole.Write(warningPanel);
+        AnsiConsole.WriteLine();
+
+        if (!AnsiConsole.Confirm("[red]Are you sure you want to delete this DJ set?[/]", false))
+        {
+            AnsiConsole.MarkupLine("[yellow]Deletion canceled.[/]");
+            AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+            Console.ReadKey(true);
+            return;
+        }
+
+        AnsiConsole.Status()
+            .Start("Deleting DJ set...", ctx =>
+            {
+                ctx.Spinner(Spinner.Known.Dots);
+                ctx.SpinnerStyle(Style.Parse("red"));
+
+                // Remove related data first
+                if (djSet.SetSongs != null)
+                    context.SetSongs.RemoveRange(djSet.SetSongs);
+
+                if (djSet.SetAnalytics != null)
+                    context.SetAnalytics.Remove(djSet.SetAnalytics);
+
+                // Then remove the DJ set
+                context.DjSets.Remove(djSet);
+                context.SaveChanges();
+            });
+
+        AnsiConsole.MarkupLine("\n[green]DJ Set deleted successfully![/]");
+        AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+        Console.ReadKey(true);
     }
 }
+
+
 
