@@ -3,6 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _1001;
 
+/*
+Table structure makes a lot of sense to me.
+All cols make sense as do their relationships, and navigational fields are set up correctly
+*/
+
 // Songs table
 [Table("songs")]
 public class Song

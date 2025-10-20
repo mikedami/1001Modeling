@@ -27,6 +27,18 @@ class AppDbContext(string dbName = "1001") : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        /*
+        Only thing i would add is perhaps using HasIndex to make certain cols unique such as
+
+         modelBuilder.Entity<Artist>()
+            .HasIndex(a => a.DisplayName)
+            .IsUnique();
+
+        but maybe you don't want display name to be unique
+        */
+
+       
+
         // Configure composite primary key for SongArtist (many-to-many junction table)
         modelBuilder.Entity<SongArtist>()
             .HasKey(sa => new { sa.SongId, sa.ArtistId });
