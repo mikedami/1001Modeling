@@ -37,6 +37,9 @@ public static class Program
                         "Exit"
                     }));
 
+    //Additionally, having a feature where the user could indicate 
+    //favorite DJ sets could be an element to enhance user experience.  
+
             AnsiConsole.Clear();
 
             switch (choice)
@@ -121,6 +124,9 @@ public static class Program
                         "View set analytics",
                         "Back to main menu"
                     }));
+
+            // The usability of this is great for users to navigate!
+
 
             AnsiConsole.Clear();
 
@@ -699,6 +705,9 @@ public static class Program
         context.SaveChanges();
     }
 
+        //Adding analytics is a cool feature for users to track performance.
+        //Creating a feature that could compare analytics of sets could be a helpful and fun
+        //feature in the future!
     static Artist GetOrCreateArtist(AppDbContext context)
     {
         var searchName = AnsiConsole.Ask<string>("[cyan]Search for existing artist by name (or press Enter to create new):[/]", string.Empty);
@@ -1099,3 +1108,6 @@ public static class Program
 
 
 
+// Very thorough implementation for every feature! Additionally, having some sample data or
+// preexisting database seeding would be helpful for testing and 
+// and to spark ideas on how to use the application for the user.
