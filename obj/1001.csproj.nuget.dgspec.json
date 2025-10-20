@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\jmfaryl\\source\\repos\\CodeJam3-PeerReview\\1001.csproj": {}
+    "C:\\Users\\jmfrrud\\Source\\Repos\\1001Modeling\\1001.csproj": {}
   },
   "projects": {
-    "C:\\Users\\jmfaryl\\source\\repos\\CodeJam3-PeerReview\\1001.csproj": {
+    "C:\\Users\\jmfrrud\\Source\\Repos\\1001Modeling\\1001.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\jmfaryl\\source\\repos\\CodeJam3-PeerReview\\1001.csproj",
+        "projectUniqueName": "C:\\Users\\jmfrrud\\Source\\Repos\\1001Modeling\\1001.csproj",
         "projectName": "1001",
-        "projectPath": "C:\\Users\\jmfaryl\\source\\repos\\CodeJam3-PeerReview\\1001.csproj",
-        "packagesPath": "C:\\Users\\jmfaryl\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\jmfaryl\\source\\repos\\CodeJam3-PeerReview\\obj\\",
+        "projectPath": "C:\\Users\\jmfrrud\\Source\\Repos\\1001Modeling\\1001.csproj",
+        "packagesPath": "C:\\Users\\jmfrrud\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\jmfrrud\\Source\\Repos\\1001Modeling\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\jmfaryl\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\jmfrrud\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -85,7 +85,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
