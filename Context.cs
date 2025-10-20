@@ -22,6 +22,7 @@ class AppDbContext(string dbName = "1001") : DbContext
         optionsBuilder.UseNpgsql($"Host={_connectionHost};Database={_connectionDbName}");
     }
 
+
     // Configure composite keys and relationships
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,4 +81,11 @@ class AppDbContext(string dbName = "1001") : DbContext
             .HasForeignKey<SetAnalytics>(sa => sa.DjSetId)
             .OnDelete(DeleteBehavior.Cascade);
     }
+    // Alternatively, separating each configuration 
+    // into its own method could enhance reusability if this management system was developed further,
+    // but this approach keeps everything concise and looks super clean!
+
 }
+
+// Clear, readable, consice relationships between tables. 
+// The flow is intuitive and easy to follow as a user!

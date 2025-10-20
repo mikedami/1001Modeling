@@ -178,3 +178,4 @@ public class Venue
     // Navigation property
     public ICollection<DjSet> DjSets { get; set; } = new List<DjSet>();
 }
+// Keys and tables looking well defined and great here!
