@@ -14,7 +14,7 @@ namespace TrackListApp{
             builder.Services.AddDbContext<AppDbContext>();
 
             builder.Services.AddControllersWithViews();  
-
+            builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();

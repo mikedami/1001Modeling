@@ -1,0 +1,49 @@
+@model _1001.DjSet
+
+@{
+    ViewData["Title"] = Model.Title ?? "DJ Set Details";
+}
+
+<h1>@Model.Title</h1>
+
+<p><strong>Artist:</strong> @Model.Artist?.DisplayName</p>
+<p><strong>Date/Time:</strong> @(Model.SetDatetime?.ToString("yyyy-MM-dd HH:mm"))</p>
+<p><strong>Duration:</strong> @Model.DurationMinutes minutes</p>
+<p><strong>Venue:</strong> @Model.Venue?.Name</p>
+<p><strong>Source:</strong>
+@if (!string.IsNullOrEmpty(Model.SourceUrl))
+{
+    <a href="@Model.SourceUrl" target="_blank">@Model.SourceUrl</a>
+}
+</p>
+
+<h2>Set Songs</h2>
+@if (Model.SetSongs != null && Model.SetSongs.Any())
+{
+    <ul>
+    @foreach (var setSong in Model.SetSongs)
+    {
+        <li>@setSong.Song?.Title</li>
+    }
+    </ul>
+}
+else
+{
+    <p>No songs listed for this set.</p>
+}
+
+<h2>Analytics</h2>
+@if (Model.SetAnalytics != null)
+{
+    <p>Tickets Sold: @Model.SetAnalytics.TicketsSold</p>
+    <p>Attendance: @Model.SetAnalytics.AttendanceCount</p>
+    <p>Gross Revenue: @Model.SetAnalytics.GrossRevenue</p>
+    <p>Streams: @Model.SetAnalytics.StreamCount</p>
+    <p>Likes: @Model.SetAnalytics.LikeCount</p>
+}
+else
+{
+    <p>No analytics available.</p>
+}
+
+<p><a asp-controller="TrackList" asp-action="Sets">Back to all sets</a></p>

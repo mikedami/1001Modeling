@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Notesbin.Controllers;
 
-
+[ApiController]
+[Route("api/[controller]")]
 public class TrackListController : Controller
 {
     private readonly AppDbContext _context;
@@ -15,8 +16,38 @@ public class TrackListController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index()
+    // GET: /TrackList/Sets
+    [HttpGet("sets")]
+    public async Task<IActionResult> Sets()
     {
-        return View(await _context.DjSets.ToListAsync());
+        // Include navigation properties needed for the view
+        var sets = await _context.DjSets
+            .Include(s => s.Artist)
+            .Include(s => s.Venue)
+            .Include(s => s.SetSongs)
+                .ThenInclude(ss => ss.Song)
+            .Include(s => s.SetAnalytics)
+            .ToListAsync();
+
+        return View(sets);
     }
+
+    // GET: /TrackList/Sets/{id}
+    [HttpGet("sets/{id}")]
+    public async Task<IActionResult> Sets(int id)
+    {
+        var set = await _context.DjSets
+            .Include(s => s.Artist)
+            .Include(s => s.Venue)
+            .Include(s => s.SetSongs)
+                .ThenInclude(ss => ss.Song)
+            .Include(s => s.SetAnalytics)
+            .FirstOrDefaultAsync(s => s.DjSetId == id);
+
+        if (set == null)
+            return NotFound();
+
+        return View("SetsDetails", set);
+    }
+
 }
