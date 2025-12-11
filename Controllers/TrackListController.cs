@@ -50,6 +50,58 @@ public class TrackListController : Controller
         return View("SetsDetails", set);
     }
 
+    // GET: /TrackList/Sets/{id}
+    [HttpGet("sets/artists/{id}")]
+    public async Task<IActionResult> GetSetsByArtist(int id)
+    {
+        var sets = await _context.DjSets
+            .Include(s => s.Artist)
+            .Include(s => s.Venue)
+            .Include(s => s.SetSongs)
+                .ThenInclude(ss => ss.Song)
+            .Include(s => s.SetAnalytics)
+            .Where(s => s.ArtistId == id)
+            .ToListAsync();
+
+        return View("Sets", sets);
+    }
+
+    // GET: /TrackList/Venue/{id}
+    [HttpGet("sets/venue/{id}")]
+    public async Task<IActionResult> GetSetsByVenue(int id)
+    {
+        var sets = await _context.DjSets
+            .Include(s => s.Artist)
+            .Include(s => s.Venue)
+            .Include(s => s.SetSongs)
+                .ThenInclude(ss => ss.Song)
+            .Include(s => s.SetAnalytics)
+            .Where(s => s.VenueId == id)
+            .ToListAsync();
+
+        return View("Sets", sets);
+    }
+
+    // GET: /TrackList/Sets/Date
+    [HttpGet("sets/date/{start}/{end}")]
+    public async Task<IActionResult> GetSetsByArtist(DateTime start, DateTime? end = null)
+    {
+        if (end == null)
+        {
+            end = DateTime.MaxValue;
+        }
+        var sets = await _context.DjSets
+            .Include(s => s.Artist)
+            .Include(s => s.Venue)
+            .Include(s => s.SetSongs)
+                .ThenInclude(ss => ss.Song)
+            .Include(s => s.SetAnalytics)
+            .Where(s => s.SetDatetime >= start && s.SetDatetime <= end)
+            .ToListAsync();
+
+        return View("Sets", sets);
+    }
+}
     // POST: /TrackList/AddSet
     [HttpPost("AddSet")]
     public async Task<IActionResult> AddSet([FromBody] AddSetRequest request)
