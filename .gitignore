@@ -1,0 +1,91 @@
+########################
+# Build output
+########################
+bin/
+obj/
+out/
+publish/
+artifacts/
+
+########################
+# Visual Studio / VS Code
+########################
+.vscode/
+.vs/
+*.user
+*.suo
+*.userprefs
+
+########################
+# Logs / temp files
+########################
+*.log
+*.tlog
+*.vspscc
+*.pidb
+*.svclog
+*.psess
+*.vsp
+*.vspx
+*.tmp
+*.temp
+
+########################
+# ASP.NET Core
+########################
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+
+# If you want all secrets ignored:
+# appsettings.*.json
+
+# IIS publish profiles
+*.pubxml
+*.publishproj
+
+########################
+# Entity Framework Core
+########################
+#migrations history
+*Migrations/*_Snapshot.cs
+
+# EF Core tools files
+efpt.config.json
+
+########################
+# NuGet
+########################
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+########################
+# Resharper / Rider
+########################
+.idea/
+*.DotSettings.user
+
+########################
+# OS-specific
+########################
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+########################
+# Others
+########################
+*.sqlite-journal
+*.db-wal
+*.db-shm
