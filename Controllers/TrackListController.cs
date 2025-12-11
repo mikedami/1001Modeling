@@ -268,6 +268,36 @@ public class TrackListController : Controller
 
         return Ok(response);
     }
+
+    // Delete: /TrackList/sets/{id}
+    [HttpDelete("sets/{id}")]
+    public async Task<IActionResult> DeleteSet(int id)
+    {
+        var djSet = await _context.DjSets
+            .Include(s => s.SetSongs)
+            .Include(s => s.SetAnalytics)
+            .FirstOrDefaultAsync(s => s.DjSetId == id);
+
+        if (djSet == null)
+            return NotFound();
+
+        if (djSet.SetSongs != null && djSet.SetSongs.Count > 0)
+        {
+            _context.SetSongs.RemoveRange(djSet.SetSongs);
+        }
+
+        if (djSet.SetAnalytics != null)
+        {
+            _context.SetAnalytics.Remove(djSet.SetAnalytics);
+        }
+
+        _context.DjSets.Remove(djSet);
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
 }
 
 public class AddSetRequest
@@ -316,3 +346,4 @@ public class SongResponse
     public int? Bpm { get; set; }
     public string ArtistName { get; set; } = string.Empty;
 }
+
