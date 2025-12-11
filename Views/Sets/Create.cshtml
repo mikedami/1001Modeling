@@ -1,0 +1,119 @@
+@model Notesbin.Controllers.CreateSetViewModel
+
+@{
+    ViewData["Title"] = "Add New Set";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h2 class="mb-0">Add New Set</h2>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" id="createSetForm">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Set Title</label>
+                        <input asp-for="Title" class="form-control" required placeholder="e.g. Live at Ultra 2025">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ArtistName" class="form-label">Artist / DJ</label>
+                            <input asp-for="ArtistName" class="form-control" required placeholder="e.g. Martin Garrix">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SetDatetime" class="form-label">Date</label>
+                            <input asp-for="SetDatetime" type="date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="VenueName" class="form-label">Venue</label>
+                            <input asp-for="VenueName" class="form-control" required placeholder="e.g. Bayfront Park">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TicketsSold" class="form-label">Tickets Sold</label>
+                            <input asp-for="TicketsSold" type="number" class="form-control" value="0">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Tracklist</label>
+                        <div id="tracklist-container">
+                            <div class="row mb-2 track-entry">
+                                <div class="col-5">
+                                    <input type="text" name="Tracklist[0].SongTitle" class="form-control" placeholder="Song Title" required />
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" name="Tracklist[0].ArtistName" class="form-control" placeholder="Artist Name" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-success add-track-btn"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Create Set</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('tracklist-container');
+            
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('.add-track-btn');
+                const removeBtn = e.target.closest('.remove-track-btn');
+
+                if (btn) {
+                    // Change current button to remove button
+                    btn.classList.remove('btn-success', 'add-track-btn');
+                    btn.classList.add('btn-danger', 'remove-track-btn');
+                    btn.innerHTML = '<i class="bi bi-trash"></i>';
+
+                    // Add new row
+                    const count = container.querySelectorAll('.track-entry').length;
+                    const newRow = document.createElement('div');
+                    newRow.className = 'row mb-2 track-entry';
+                    newRow.innerHTML = `
+                        <div class="col-5">
+                            <input type="text" name="Tracklist[${count}].SongTitle" class="form-control" placeholder="Song Title" required />
+                        </div>
+                        <div class="col-5">
+                            <input type="text" name="Tracklist[${count}].ArtistName" class="form-control" placeholder="Artist Name" />
+                        </div>
+                        <div class="col-2">
+                            <button type="button" class="btn btn-success add-track-btn"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(newRow);
+                    reindexRows();
+                } else if (removeBtn) {
+                    removeBtn.closest('.track-entry').remove();
+                    reindexRows();
+                }
+            });
+
+            function reindexRows() {
+                const rows = container.querySelectorAll('.track-entry');
+                rows.forEach((row, index) => {
+                    const inputs = row.querySelectorAll('input');
+                    if (inputs.length >= 2) {
+                        inputs[0].name = `Tracklist[${index}].SongTitle`;
+                        inputs[1].name = `Tracklist[${index}].ArtistName`;
+                    }
+                });
+            }
+        });
+    </script>
+}

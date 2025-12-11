@@ -187,7 +187,7 @@ public class TrackListController : ControllerBase
         {
             Title = request.Title,
             ArtistId = artist.ArtistId,
-            SetDatetime = request.Date,
+            SetDatetime = request.Date.ToUniversalTime(),
             VenueId = venue.VenueId
         };
         _context.DjSets.Add(djSet);
@@ -256,7 +256,7 @@ public class TrackListController : ControllerBase
 
         // 1. Update basic fields
         djSet.Title = request.Title;
-        djSet.SetDatetime = request.Date;
+        djSet.SetDatetime = request.Date.ToUniversalTime();
 
         // 2. Handle Artist
         var artist = await _context.Artists.FirstOrDefaultAsync(a => a.DisplayName == request.Artist);

@@ -1,0 +1,40 @@
+@model IEnumerable<_1001.DjSet>
+
+@{
+    ViewData["Title"] = "All Sets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-collection-play"></i> All DJ Sets</h1>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add New Set</a>
+</div>
+
+<div class="row">
+    @foreach (var item in Model) {
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-truncate">@item.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <i class="bi bi-person"></i> @item.Artist.DisplayName
+                    </h6>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar"></i> @(item.SetDatetime?.ToString("MMM dd, yyyy") ?? "Unknown Date")
+                        </small>
+                        <br/>
+                        <small class="text-muted">
+                            <i class="bi bi-geo-alt"></i> @(item.Venue?.Name ?? "Unknown Venue")
+                        </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-ticket-perforated"></i> @(item.SetAnalytics?.TicketsSold?.ToString("N0") ?? "0") Sold
+                        </span>
+                        <a asp-action="Details" asp-route-id="@item.DjSetId" class="btn btn-sm btn-outline-primary">View Tracklist</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

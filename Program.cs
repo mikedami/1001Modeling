@@ -9,11 +9,14 @@ namespace TrackListApp{
     {
         public static void Main(string[] args)
         {
+            // Enable legacy timestamp behavior to handle DateTime kinds automatically
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             var builder = WebApplication.CreateBuilder(args);
             // Add services to the container.
             builder.Services.AddDbContext<AppDbContext>();
 
-            builder.Services.AddControllers();  
+            builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -26,6 +29,14 @@ namespace TrackListApp{
                 app.UseSwaggerUI();
             }
 
+            app.UseStaticFiles();
+            app.UseRouting();
+            app.UseAuthorization();
+
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+            
             app.MapControllers();
 
             app.Run();
