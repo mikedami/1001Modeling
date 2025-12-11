@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Notesbin.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class TrackListController : Controller
 {
     private readonly AppDbContext _context;
