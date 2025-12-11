@@ -132,6 +132,98 @@ public class TrackListController : Controller
         return Ok(response);
     }
 
+    // PUT: /TrackList/sets/{id}
+    [HttpPut("sets/{id}")]
+    public async Task<IActionResult> UpdateSet(int id, [FromBody] UpdateSetRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var djSet = await _context.DjSets
+            .Include(s => s.SetAnalytics)
+            .Include(s => s.SetSongs)
+            .FirstOrDefaultAsync(s => s.DjSetId == id);
+
+        if (djSet == null)
+            return NotFound();
+
+        // 1. Update basic fields
+        djSet.Title = request.Title;
+        djSet.SetDatetime = request.Date;
+
+        // 2. Handle Artist
+        var artist = await _context.Artists.FirstOrDefaultAsync(a => a.DisplayName == request.Artist);
+        if (artist == null)
+        {
+            artist = new Artist { DisplayName = request.Artist };
+            _context.Artists.Add(artist);
+            await _context.SaveChangesAsync();
+        }
+        djSet.ArtistId = artist.ArtistId;
+
+        // 3. Handle Venue
+        var venue = await _context.Venues.FirstOrDefaultAsync(v => v.Name == request.Venue);
+        if (venue == null)
+        {
+            venue = new Venue { Name = request.Venue };
+            _context.Venues.Add(venue);
+            await _context.SaveChangesAsync();
+        }
+        djSet.VenueId = venue.VenueId;
+
+        // 4. Handle Analytics
+        if (djSet.SetAnalytics == null)
+        {
+            djSet.SetAnalytics = new SetAnalytics { DjSetId = id, TicketsSold = request.TicketsSold };
+            _context.SetAnalytics.Add(djSet.SetAnalytics);
+        }
+        else
+        {
+            djSet.SetAnalytics.TicketsSold = request.TicketsSold;
+        }
+
+        // 5. Handle Tracklist
+        // Remove existing songs
+        _context.SetSongs.RemoveRange(djSet.SetSongs);
+        
+        // Add new songs
+        if (request.Tracklist != null)
+        {
+            foreach (var songTitle in request.Tracklist)
+            {
+                var song = await _context.Songs.FirstOrDefaultAsync(s => s.Title == songTitle);
+                if (song == null)
+                {
+                    song = new Song { Title = songTitle };
+                    _context.Songs.Add(song);
+                    await _context.SaveChangesAsync();
+                }
+
+                var setSong = new SetSong
+                {
+                    DjSetId = id,
+                    SongId = song.SongId
+                };
+                _context.SetSongs.Add(setSong);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        var response = new DjSetResponse
+        {
+            DjSetId = djSet.DjSetId,
+            Title = djSet.Title ?? string.Empty,
+            ArtistName = artist.DisplayName,
+            SetDatetime = djSet.SetDatetime,
+            VenueName = venue.Name ?? string.Empty,
+            TicketsSold = djSet.SetAnalytics?.TicketsSold,
+            Tracklist = request.Tracklist ?? new List<string>()
+        };
+
+        return Ok(response);
+    }
+
     // POST: /TrackList/AddSong
     [HttpPost("AddSong")]
     public async Task<IActionResult> AddSong([FromBody] AddSongRequest request)
@@ -179,6 +271,16 @@ public class TrackListController : Controller
 }
 
 public class AddSetRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Artist { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string Venue { get; set; } = string.Empty;
+    public int TicketsSold { get; set; }
+    public List<string> Tracklist { get; set; } = new List<string>();
+}
+
+public class UpdateSetRequest
 {
     public string Title { get; set; } = string.Empty;
     public string Artist { get; set; } = string.Empty;
