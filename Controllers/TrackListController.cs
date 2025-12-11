@@ -101,7 +101,7 @@ public class TrackListController : Controller
 
         return View("Sets", sets);
     }
-}
+
     // POST: /TrackList/AddSet
     [HttpPost("AddSet")]
     public async Task<IActionResult> AddSet([FromBody] AddSetRequest request)
