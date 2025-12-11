@@ -7,7 +7,7 @@ namespace Notesbin.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class TrackListController : Controller
+public class TrackListController : ControllerBase
 {
     private readonly AppDbContext _context;
 
@@ -29,7 +29,18 @@ public class TrackListController : Controller
             .Include(s => s.SetAnalytics)
             .ToListAsync();
 
-        return View(sets);
+        var response = sets.Select(s => new DjSetResponse
+        {
+            DjSetId = s.DjSetId,
+            Title = s.Title ?? string.Empty,
+            ArtistName = s.Artist.DisplayName,
+            SetDatetime = s.SetDatetime,
+            VenueName = s.Venue?.Name ?? string.Empty,
+            TicketsSold = s.SetAnalytics?.TicketsSold,
+            Tracklist = s.SetSongs.Select(ss => ss.Song.Title).ToList()
+        });
+
+        return Ok(response);
     }
 
     // GET: /TrackList/Sets/{id}
@@ -47,7 +58,18 @@ public class TrackListController : Controller
         if (set == null)
             return NotFound();
 
-        return View("SetsDetails", set);
+        var response = new DjSetResponse
+        {
+            DjSetId = set.DjSetId,
+            Title = set.Title ?? string.Empty,
+            ArtistName = set.Artist.DisplayName,
+            SetDatetime = set.SetDatetime,
+            VenueName = set.Venue?.Name ?? string.Empty,
+            TicketsSold = set.SetAnalytics?.TicketsSold,
+            Tracklist = set.SetSongs.Select(ss => ss.Song.Title).ToList()
+        };
+
+        return Ok(response);
     }
 
     // GET: /TrackList/Sets/{id}
@@ -63,7 +85,18 @@ public class TrackListController : Controller
             .Where(s => s.ArtistId == id)
             .ToListAsync();
 
-        return View("Sets", sets);
+        var response = sets.Select(s => new DjSetResponse
+        {
+            DjSetId = s.DjSetId,
+            Title = s.Title ?? string.Empty,
+            ArtistName = s.Artist.DisplayName,
+            SetDatetime = s.SetDatetime,
+            VenueName = s.Venue?.Name ?? string.Empty,
+            TicketsSold = s.SetAnalytics?.TicketsSold,
+            Tracklist = s.SetSongs.Select(ss => ss.Song.Title).ToList()
+        });
+
+        return Ok(response);
     }
 
     // GET: /TrackList/Venue/{id}
@@ -79,12 +112,23 @@ public class TrackListController : Controller
             .Where(s => s.VenueId == id)
             .ToListAsync();
 
-        return View("Sets", sets);
+        var response = sets.Select(s => new DjSetResponse
+        {
+            DjSetId = s.DjSetId,
+            Title = s.Title ?? string.Empty,
+            ArtistName = s.Artist.DisplayName,
+            SetDatetime = s.SetDatetime,
+            VenueName = s.Venue?.Name ?? string.Empty,
+            TicketsSold = s.SetAnalytics?.TicketsSold,
+            Tracklist = s.SetSongs.Select(ss => ss.Song.Title).ToList()
+        });
+
+        return Ok(response);
     }
 
     // GET: /TrackList/Sets/Date
     [HttpGet("sets/date/{start}/{end}")]
-    public async Task<IActionResult> GetSetsByArtist(DateTime start, DateTime? end = null)
+    public async Task<IActionResult> GetSetsByDate(DateTime start, DateTime? end = null)
     {
         if (end == null)
         {
@@ -99,7 +143,18 @@ public class TrackListController : Controller
             .Where(s => s.SetDatetime >= start && s.SetDatetime <= end)
             .ToListAsync();
 
-        return View("Sets", sets);
+        var response = sets.Select(s => new DjSetResponse
+        {
+            DjSetId = s.DjSetId,
+            Title = s.Title ?? string.Empty,
+            ArtistName = s.Artist.DisplayName,
+            SetDatetime = s.SetDatetime,
+            VenueName = s.Venue?.Name ?? string.Empty,
+            TicketsSold = s.SetAnalytics?.TicketsSold,
+            Tracklist = s.SetSongs.Select(ss => ss.Song.Title).ToList()
+        });
+
+        return Ok(response);
     }
 
     // POST: /TrackList/AddSet

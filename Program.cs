@@ -13,7 +13,7 @@ namespace TrackListApp{
             // Add services to the container.
             builder.Services.AddDbContext<AppDbContext>();
 
-            builder.Services.AddControllersWithViews();  
+            builder.Services.AddControllers();  
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -26,7 +26,7 @@ namespace TrackListApp{
                 app.UseSwaggerUI();
             }
 
-            app.MapDefaultControllerRoute();
+            app.MapControllers();
 
             app.Run();
         }
