@@ -2,7 +2,7 @@
 
 namespace _1001;
 
-class AppDbContext(string dbName = "1001") : DbContext
+public class AppDbContext(string dbName = "1001") : DbContext
 {
     private readonly string _connectionHost = "localhost";
     private readonly string _connectionDbName = dbName;
