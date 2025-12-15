@@ -12,7 +12,7 @@ using _1001;
 namespace _1001.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251016151435_initial")]
+    [Migration("20251215154220_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -66,7 +66,7 @@ namespace _1001.Migrations
                         .HasColumnName("duration_minutes");
 
                     b.Property<DateTime?>("SetDatetime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("set_datetime");
 
                     b.Property<string>("SourceUrl")

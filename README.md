@@ -9,3 +9,6 @@ This is a CLI application that allows the user to perform CRUD operations on a D
 2. dotnet ef database update
 3. dotnet run
 
+//Peer review comment here, I would add more to the readme informating more information about
+how to start and run the project. For example, on step 2, include the necessary commands further.
+(Delete migrations folder, dotnet ef migrations add Initial, ... then dotnet ef database update)

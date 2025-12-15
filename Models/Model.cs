@@ -3,6 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _1001;
 
+
+//All properties here look great, nice work!
+//The use of navigation properties is well done and will help with data retrieval
+// Overall, the models are well-structured and follow best practices for Entity Framework Core.
+
 // Songs table
 [Table("songs")]
 public class Song

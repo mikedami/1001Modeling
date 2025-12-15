@@ -51,18 +51,33 @@ public class SetsController : Controller
         return View();
     }
 
+    //This is a large HTTP post, it might be good to add some console debugging logs throughout
+    //the post, just to have peace of mind if anything goes wrong at a certain point. Sort of like
+    //having checkpoints to see where things might be failing.
+
     // POST: Sets/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateSetViewModel model)
     {
         // 1. Handle Artist
+
+        //for example, you could wrap these in try catch blocks to catch any exceptions that may arise
         var artist = await _context.Artists.FirstOrDefaultAsync(a => a.DisplayName == model.ArtistName);
-        if (artist == null)
+
+        try
         {
-            artist = new Artist { DisplayName = model.ArtistName };
-            _context.Artists.Add(artist);
-            await _context.SaveChangesAsync();
+            if (artist == null)
+            {
+                artist = new Artist { DisplayName = model.ArtistName };
+                _context.Artists.Add(artist);
+                await _context.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling artist: {ex.Message}");
+            //or write your own error handling
         }
 
         // 2. Handle Venue
@@ -133,6 +148,9 @@ public class SetsController : Controller
                     }
                 }
 
+                //This is great, good handling of the tracklist entries
+                //Nice to link things together
+
                 // Link Song to Set
                 _context.SetSongs.Add(new SetSong
                 {
@@ -146,6 +164,8 @@ public class SetsController : Controller
         return RedirectToAction(nameof(Index));
     }
 }
+
+//Good organization to have the view model classes down here
 
 public class CreateSetViewModel
 {

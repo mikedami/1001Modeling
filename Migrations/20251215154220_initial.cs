@@ -90,7 +90,7 @@ namespace _1001.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     artist_id = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: true),
-                    set_datetime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    set_datetime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     duration_minutes = table.Column<int>(type: "integer", nullable: true),
                     source_url = table.Column<string>(type: "text", nullable: true),
                     venue_id = table.Column<int>(type: "integer", nullable: true)

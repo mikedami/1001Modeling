@@ -4,6 +4,11 @@ using System.Threading.Tasks;
 
 namespace Notesbin.Controllers;
 
+//I like how you split up the controllers into their own files for better organization
+//This is great, instead of having one large controller file
+
+//API route here looks good, well done, simple and effective
+
 [ApiController]
 [Route("[controller]")]
 public class ArtistsController : ControllerBase

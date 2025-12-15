@@ -63,7 +63,7 @@ namespace _1001.Migrations
                         .HasColumnName("duration_minutes");
 
                     b.Property<DateTime?>("SetDatetime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("set_datetime");
 
                     b.Property<string>("SourceUrl")
